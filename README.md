@@ -23,6 +23,8 @@ Then I stumbled over one of those "You probably don't need Redux" articles. It m
 ## Are there drawbacks?
 
 - A store root **must** be an object, no arrays or other non-object types are supported. Its properties can be of any type.
+- Updates using the `.update()` method are not atomic.
+- No time-travel debugging.
 
 ## How do I install it?
 
