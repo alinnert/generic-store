@@ -6,7 +6,7 @@ type UpdateFn<T> = (state: T) => void | Promise<void>
 interface Store<T> {
   state: T
   update(action: UpdateFn<T>): void
-  set(state: T): void
+  set(state: Partial<T>): void
   subscribe(callback: Subscriber<T>): (() => void) | void
 }
 
