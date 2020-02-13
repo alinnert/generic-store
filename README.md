@@ -29,7 +29,7 @@ Then I stumbled over one of those "You probably don't need Redux" articles. It m
 ## How do I install it?
 
 ~~~ bash
-$ npm install tstate
+$ npm install @alinnert/tstate
 ~~~
 
 ## How do I use it?
