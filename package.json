@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -27,9 +27,9 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "generic-store-package-3",
+  "name": "tstore",
   "author": "Andreas Linnert",
-  "module": "dist/generic-store-package-3.esm.js",
+  "module": "dist/tstore.esm.js",
   "devDependencies": {
     "@types/jest": "^25.1.2",
     "@types/react": "^16.9.19",

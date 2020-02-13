@@ -1,6 +1,6 @@
-# Generic Store
+# TStore
 
-This is a very simple, generic data store, writen in TypeScript.
+This is a very simple data store/state management library, writen in TypeScript. It also comes with a React hook.
 
 ## Why?
 
@@ -10,7 +10,7 @@ Redux is bulky (in terms of boilerplate code) and the necessary type parameters 
 
 The API of MobX just feels like its all over the place. This gives me a hard time getting started with it. There are many ways to do the same thing, including decorators which aren't supported by `create-react-app` - for a good reason.
 
-Then I stumbled over one of those "You probably don't need Redux" articles. It made me think. So I created a module that fetches data from a server, stores it (+ some status information) in variables and connected that modules to a React component via a hook. I made another one for a different resource on the same server. Now I was able to identify the repeating parts and abstracted them away into a new module. This generic store is the result of that effort. It turned out to be less than 50 LOC which was really surprising.
+Then I stumbled over one of those "You probably don't need Redux" articles. It made me think. So I created a module that fetches data from a server, stores it (+ some status information) in variables and connected that modules to a React component via a hook. I made another one for a different resource on the same server. Now I was able to identify the repeating parts and abstracted them away into a new module. TStore is the result of that effort. It turned out to be less than 50 LOC which was really surprising.
 
 ## What are the benefits?
 
@@ -24,23 +24,24 @@ Then I stumbled over one of those "You probably don't need Redux" articles. It m
 
 - A store root **must** be an object, no arrays or other non-object types are supported. Its properties can be of any type.
 - Currently, there's no support for computed values. (May be added later)
-- Making atomic updates in the `.update()` method may take some effort, if they are complex.
 - No time-travel debugging.
 
 ## How do I install it?
 
-I'm not sure if it's worth putting ~50 LOC on npm. Just put [createStore.ts](https://github.com/alinnert/generic-store/blob/master/createStore.ts) into your project and use it from there. Maybe I'll add it later and also provide a JS version. Also, `generic-store` is just a description, not a name.
+~~~ bash
+$ npm install tstore
+~~~
 
 ## How do I use it?
 
-First of all you create your store. Similar to how you create your Redux reducers.
+First of all you create your store.
 
 **newsStore.ts**
 
 ~~~ ts
 import { createStore, createReactHook } from './createStore.ts'
 
-// step 1: type your store
+// STEP 1: create interfaces that describe your store
 interface News {
   title: string
   body: string
@@ -52,20 +53,35 @@ interface NewsStore {
   error: boolean
 }
 
-// step 2: create the initial state (this MUST be an object)
+// STEP 2: create the initial state (this MUST be an object)
 const initialState: NewsStore = {
   items: [],
   loading: false,
   error: false
 }
 
-// step 3: create the store
+// STEP 3: create the store
 const newsStore = createStore<NewsStore>(initialState)
 
-// step 4: create the React hook and export it
+// STEP 4A (React): create the React hook and export it
 export const useNewsStore = createReactHook(newsStore)
 
-// step 5: write some (possibly async) functions to change your store
+// STEP 4B (No React): subscribe to the store
+// You will receive the latest state immediately after subscribing.
+const unsubscribeNewsStore = newsStore.subscribe((newState) => {
+  doSomethingWith(newState)
+})
+
+// Unsubscribe if you're finished with your business.
+// Useful for component frameworks like React.
+// This is what the built-in React hook actually does.
+unsubscribeNewsStore()
+
+// You can also access the current state. This returns the
+// store object. In this case it's of type `NewsStore`.
+newsStore.state
+
+// STEP 5: write some (maybe async) functions to change your store
 export async function loadNews (): Promise<void> {
   newsStore.set({ loading: true, error: false })
   
