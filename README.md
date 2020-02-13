@@ -1,4 +1,4 @@
-# TStore
+# TState
 
 This is a very simple data store/state management library, writen in TypeScript. It also comes with a React hook.
 
@@ -10,7 +10,7 @@ Redux is bulky (in terms of boilerplate code) and the necessary type parameters 
 
 The API of MobX just feels like its all over the place. This gives me a hard time getting started with it. There are many ways to do the same thing, including decorators which aren't supported by `create-react-app` - for a good reason.
 
-Then I stumbled over one of those "You probably don't need Redux" articles. It made me think. So I created a module that fetches data from a server, stores it (+ some status information) in variables and connected that modules to a React component via a hook. I made another one for a different resource on the same server. Now I was able to identify the repeating parts and abstracted them away into a new module. TStore is the result of that effort. It turned out to be less than 50 LOC which was really surprising.
+Then I stumbled over one of those "You probably don't need Redux" articles. It made me think. So I created a module that fetches data from a server, stores it (+ some status information) in variables and connected that modules to a React component via a hook. I made another one for a different resource on the same server. Now I was able to identify the repeating parts and abstracted them away into a new module. TState is the result of that effort. It turned out to be less than 50 LOC which was really surprising.
 
 ## What are the benefits?
 
@@ -29,7 +29,7 @@ Then I stumbled over one of those "You probably don't need Redux" articles. It m
 ## How do I install it?
 
 ~~~ bash
-$ npm install tstore
+$ npm install tstate
 ~~~
 
 ## How do I use it?
