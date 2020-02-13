@@ -23,6 +23,7 @@ Then I stumbled over one of those "You probably don't need Redux" articles. It m
 ## Are there drawbacks?
 
 - A store root **must** be an object, no arrays or other non-object types are supported. Its properties can be of any type.
+- Currently, there's no support for computed values. (May be added later)
 - Making atomic updates in the `.update()` method may take some effort, if they are complex.
 - No time-travel debugging.
 
