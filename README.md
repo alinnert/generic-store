@@ -89,15 +89,7 @@ export async function loadNews (): Promise<void> {
     const result = axios.get('/news')
     newsStore.set({ items: result.data, loading: false, error: false })
   } catch {
-    // Just to demonstrate the other way to update the store.
-    // This function is more flexible since you can
-    // read the state and set it based on that information.
-    // The callback function can also be async, in case you
-    // you need to await something from the inside.
-    newsStore.update(state => {
-      state.loading = false
-      state.error = true
-    })
+    newsStore.set({ loading: false, error: true })
   }
 }
 ~~~
