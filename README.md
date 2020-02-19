@@ -61,7 +61,7 @@ const initialState: NewsStore = {
 }
 
 // STEP 3: create the store
-const newsStore = createStore<NewsStore>(initialState)
+const newsStore = createStore(initialState)
 
 // STEP 4A (React): create the React hook and export it
 export const useNewsStore = createReactHook(newsStore)
