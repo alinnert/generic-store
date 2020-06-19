@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 
 type Subscriber<T> = (store: T) => void
-type UpdateFn<T> = (state: T) => void | Promise<void>
 
 interface Store<T> {
   state: T
-  update(action: UpdateFn<T>): void
   set(state: Partial<T>): void
   subscribe(callback: Subscriber<T>): (() => void) | void
 }
@@ -17,11 +15,6 @@ export function createStore<T> (initialState: T): Store<T> {
 
   return {
     state,
-
-    async update (callback) {
-      try { await callback(state) } catch {}
-      notify()
-    },
 
     set (changes) {
       Object.assign(state, changes)
@@ -41,7 +34,6 @@ export function createReactHook<T> (store: Store<T>): () => T {
   return function useStore (): T {
     const [state, setState] = useState<T>(store.state)
     const handleChange: Subscriber<T> = changes => { setState({ ...changes }) }
-
     useEffect(() => store.subscribe(handleChange), [])
     return state
   }

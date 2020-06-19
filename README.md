@@ -14,15 +14,15 @@ Then I stumbled over one of those "You probably don't need Redux" articles. It m
 
 ## What are the benefits?
 
-- It has been written with TypeScript in mind. It's super convenient to type your stores.
+- It is written with TypeScript in mind. It's super convenient to type your stores.
 - The API surface is tiny, which makes it easy to learn.
 - It "supports" async actions out of the box, by not limiting to sync actions in the first place.
-- No wrapper component needed.
-- Also, React support is separated from the core implementation - but included. So, you can use it with any UI framework.
+- No wrapper component needed for React.
+- Also, React support is separated from the core implementation, but included. So, you can use it basically anywhere.
 
 ## Are there drawbacks?
 
-- A store root **must** be an object, no arrays or other non-object types are supported. Its properties can be of any type.
+- A store root **must** be an object, no arrays and other non-object types are supported. Its properties can be of any type, though.
 - Currently, there's no support for computed values. (May be added later)
 - No time-travel debugging.
 
@@ -39,7 +39,7 @@ First of all you create your store.
 **newsStore.ts**
 
 ~~~ ts
-import { createStore, createReactHook } from './createStore.ts'
+import { createStore, createReactHook } from '@alinnert/tstate'
 
 // STEP 1: create interfaces that describe your store
 interface News {
@@ -53,15 +53,22 @@ interface NewsStore {
   error: boolean
 }
 
-// STEP 2: create the initial state (this MUST be an object)
-const initialState: NewsStore = {
-  items: [],
-  loading: false,
-  error: false
+// STEP 2: create the initial state
+// The state MUST be an object. Simple values like
+// numbers or strings but also arrays are not supported.
+// Wrapping the state object in a function is recommended
+// if you want to reuse the initial state later,
+// like in a 'reset' mutation.
+function getInitialState (): NewsStore {
+  return {
+    items: [],
+    loading: false,
+    error: false
+  }
 }
 
 // STEP 3: create the store
-const newsStore = createStore<NewsStore>(initialState)
+const newsStore = createStore(getInitialState())
 
 // STEP 4A (React): create the React hook and export it
 export const useNewsStore = createReactHook(newsStore)
@@ -82,6 +89,8 @@ unsubscribeNewsStore()
 newsStore.state
 
 // STEP 5: write some (maybe async) functions to change your store
+// Pro Tip: You can put all calls to `newsStore.set()` in separate
+// ("mutation") functions to avoid repeating the entire state object.
 export async function loadNews (): Promise<void> {
   newsStore.set({ loading: true, error: false })
   
@@ -89,15 +98,7 @@ export async function loadNews (): Promise<void> {
     const result = axios.get('/news')
     newsStore.set({ items: result.data, loading: false, error: false })
   } catch {
-    // Just to demonstrate the other way to update the store.
-    // This function is more flexible since you can
-    // read the state and set it based on that information.
-    // The callback function can also be async, in case you
-    // you need to await something from the inside.
-    newsStore.update(state => {
-      state.loading = false
-      state.error = true
-    })
+    newsStore.set({ loading: false, error: true })
   }
 }
 ~~~
@@ -147,5 +148,3 @@ export const NewsList: FC = () => {
   )
 }
 ~~~
-
-That's all there is to it!

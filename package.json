@@ -1,6 +1,6 @@
 {
   "name": "@alinnert/tstate",
-  "version": "0.1.0",
+  "version": "1.0.3",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -25,25 +25,26 @@
   "author": "Andreas Linnert",
   "module": "dist/tstate.esm.js",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.2",
-    "@types/react": "^16.9.19",
+    "@types/jest": "^25.1.4",
+    "@types/react": "^16.9.23",
     "@types/react-dom": "^16.9.5",
-    "@typescript-eslint/eslint-plugin": "^2.19.2",
-    "@typescript-eslint/parser": "^2.19.2",
+    "@typescript-eslint/eslint-plugin": "^2.24.0",
+    "@typescript-eslint/parser": "^2.24.0",
     "eslint": "^6.8.0",
-    "eslint-config-standard-with-typescript": "^13.0.0",
+    "eslint-config-standard-with-typescript": "^14.0.0",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "husky": "^4.2.3",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "tsdx": "^0.12.3",
-    "tslib": "^1.10.0",
-    "typescript": "^3.7.5"
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "tsdx": "^0.13.1",
+    "tslib": "^1.11.1",
+    "typescript": "^3.8.3"
   }
 }
