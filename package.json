@@ -25,7 +25,8 @@
   "author": "Andreas Linnert",
   "module": "dist/tstate.esm.js",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
