@@ -1,40 +1,126 @@
 import { useEffect, useState } from 'react'
 
+// #region types
 type Subscriber<T> = (store: T) => void
-
-interface Store<T> {
-  state: T
-  set(state: Partial<T>): void
-  subscribe(callback: Subscriber<T>): (() => void) | void
+type ComputedFn<T> = (state: T) => unknown
+type ComputedConfig<T> = Record<string, ComputedFn<T>>
+type ComputedValues<T, C extends ComputedConfig<T>> = {
+  [CK in keyof C]: ReturnType<C[CK]>
 }
+type MergedState<T, C extends ComputedConfig<T>> = T & ComputedValues<T, C>
+type Subscriptions<T, C extends ComputedConfig<T>> =
+  Array<Subscriber<MergedState<T, C>>>
+type NamedSubscriptions<T, C extends ComputedConfig<T>> =
+  Record<keyof MergedState<T, C>, Array<Subscriber<MergedState<T, C>>>>
 
-export function createStore<T> (initialState: T): Store<T> {
-  const subscriptions: Array<Subscriber<T>> = []
-  const state: T = initialState
-  const notify = (): void => { for (const sub of subscriptions) { sub(state) } }
+interface Store<T, C extends ComputedConfig<T>> {
+  state: MergedState<T, C>
+  reset: () => void
+  set: (state: Partial<T>) => void
+  subscribe: (
+    name: keyof MergedState<T, C>,
+    callback: Subscriber<MergedState<T, C>>
+  ) => (() => void) | undefined
+  subscribeAll: (
+    callback: Subscriber<MergedState<T, C>>
+  ) => (() => void) | undefined
+}
+// #endregion types
 
-  return {
-    state,
+const stores: Array<Store<unknown, ComputedConfig<unknown>>> = []
+
+/**
+ * Create a new store.
+ * @param init
+ * A function that initializes the store.
+ * @param options
+ * A set of options for the created store.
+ */
+export function createStore<T, C extends ComputedConfig<T>> (
+  init: () => T,
+  options?: { computed?: C }
+): Store<T, C> {
+  const computed: C = options?.computed ?? Object.create(null)
+  const computedFns = Object.entries(computed ?? {})
+  const subscriptions: Subscriptions<T, C> = []
+  const namedSubscriptions: NamedSubscriptions<T, C> = Object.create(null)
+
+  /** The state of Type `T`, i.e. without the computed values. */
+  let dataState: T = init()
+  let mergedState: MergedState<T, C> = generateMergedState()
+
+  function generateMergedState (): MergedState<T, C> {
+    const computedValuesArray = computedFns.map(([key, value]) => {
+      return [key, value(dataState)]
+    })
+    const computedValues = Object.fromEntries(computedValuesArray)
+    return { ...dataState, ...computedValues }
+  }
+
+  function updateMergedState (): void {
+    mergedState = generateMergedState()
+  }
+
+  function notifySubscribers (name?: keyof MergedState<T, C>): void {
+    for (const subscription of subscriptions) {
+      subscription(mergedState)
+    }
+
+    if (name !== undefined) {
+      for (const namedSubscription of namedSubscriptions[name]) {
+        namedSubscription(mergedState)
+      }
+    }
+  }
+
+  const store: Store<T, C> = {
+    state: mergedState,
+
+    reset () { dataState = init() },
 
     set (changes) {
-      Object.assign(state, changes)
-      notify()
+      dataState = { ...dataState, ...changes }
+      updateMergedState()
+      notifySubscribers()
     },
 
-    subscribe (callback) {
+    subscribe (name, callback) {
+      if (!Array.isArray(namedSubscriptions[name])) {
+        namedSubscriptions[name] = []
+      }
+      const targetSubscriptions = namedSubscriptions[name]
+      if (targetSubscriptions.includes(callback)) { return }
+      targetSubscriptions.push(callback)
+      return () => {
+        targetSubscriptions
+          .splice(targetSubscriptions.indexOf(callback), 1)
+      }
+    },
+
+    subscribeAll (callback) {
       if (subscriptions.includes(callback)) { return }
       subscriptions.push(callback)
-      callback(state)
+      callback(mergedState)
       return () => { subscriptions.splice(subscriptions.indexOf(callback), 1) }
     }
   }
+
+  stores.push(store)
+
+  return store
 }
 
-export function createReactHook<T> (store: Store<T>): () => T {
-  return function useStore (): T {
-    const [state, setState] = useState<T>(store.state)
-    const handleChange: Subscriber<T> = changes => { setState({ ...changes }) }
-    useEffect(() => store.subscribe(handleChange), [])
+export function resetAllStores (): void {
+  stores.forEach(store => store.reset())
+}
+
+export function createReactHook<T, C extends ComputedConfig<T>> (
+  store: Store<T, C>
+): () => MergedState<T, C> {
+  return function useStore (): MergedState<T, C> {
+    const [state, setState] = useState<MergedState<T, C>>(store.state)
+    const handleChange: Subscriber<MergedState<T, C>> = changes => { setState({ ...changes }) }
+    useEffect(() => store.subscribeAll(handleChange), [])
     return state
   }
 }
