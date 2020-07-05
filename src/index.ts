@@ -47,7 +47,6 @@ export function createStore<T, C extends ComputedConfig<T>> (
 
   /** The state of Type `T`, i.e. without the computed values. */
   let dataState: T = init()
-  let mergedState: MergedState<T, C> = generateMergedState()
 
   function generateMergedState (): MergedState<T, C> {
     const computedValuesArray = computedFns.map(([key, value]) => {
@@ -58,23 +57,23 @@ export function createStore<T, C extends ComputedConfig<T>> (
   }
 
   function updateMergedState (): void {
-    mergedState = generateMergedState()
+    store.state = generateMergedState()
   }
 
   function notifySubscribers (name?: keyof MergedState<T, C>): void {
     for (const subscription of subscriptions) {
-      subscription(mergedState)
+      subscription(store.state)
     }
 
     if (name !== undefined) {
       for (const namedSubscription of namedSubscriptions[name]) {
-        namedSubscription(mergedState)
+        namedSubscription(store.state)
       }
     }
   }
 
   const store: Store<T, C> = {
-    state: mergedState,
+    state: generateMergedState(),
 
     reset () { dataState = init() },
 
@@ -100,7 +99,7 @@ export function createStore<T, C extends ComputedConfig<T>> (
     subscribeAll (callback) {
       if (subscriptions.includes(callback)) { return }
       subscriptions.push(callback)
-      callback(mergedState)
+      callback(store.state)
       return () => { subscriptions.splice(subscriptions.indexOf(callback), 1) }
     }
   }
