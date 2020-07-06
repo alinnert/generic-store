@@ -60,15 +60,16 @@ export function createStore<T, C extends ComputedConfig<T>> (
     store.state = generateMergedState()
   }
 
-  function notifySubscribers (name?: keyof MergedState<T, C>): void {
+  function notifySubscribers (): void {
     for (const subscription of subscriptions) {
       subscription(store.state)
     }
+  }
 
-    if (name !== undefined) {
-      for (const namedSubscription of namedSubscriptions[name]) {
-        namedSubscription(store.state)
-      }
+  function notifyNamedSubscribers (name: keyof MergedState<T, C>): void {
+    if (namedSubscriptions[name] === undefined) { return }
+    for (const subscription of namedSubscriptions[name]) {
+      subscription(store.state)
     }
   }
 
@@ -81,6 +82,9 @@ export function createStore<T, C extends ComputedConfig<T>> (
       dataState = { ...dataState, ...changes }
       updateMergedState()
       notifySubscribers()
+      for (const name of Object.keys(changes)) {
+        notifyNamedSubscribers(name)
+      }
     },
 
     subscribe (name, callback) {
@@ -110,7 +114,9 @@ export function createStore<T, C extends ComputedConfig<T>> (
 }
 
 export function resetAllStores (): void {
-  stores.forEach(store => store.reset())
+  for (const store of stores) {
+    store.reset()
+  }
 }
 
 export function createReactHook<T, C extends ComputedConfig<T>> (

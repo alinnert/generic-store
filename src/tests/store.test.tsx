@@ -55,3 +55,29 @@ test('computed values', () => {
 
   expect(store.state.messagesCount).toBe(1)
 })
+
+test('subscribeAll function', () => {
+  const store = createStore(init)
+  const callback = jest.fn()
+
+  store.subscribeAll(callback)
+  store.set({ status: Status.PENDING })
+
+  expect(callback.mock.calls.length).toBe(2)
+  expect(callback.mock.calls[0][0]).toMatchObject({ status: Status.OK })
+  expect(callback.mock.calls[1][0]).toMatchObject({ status: Status.PENDING })
+})
+
+test('subscribe function', () => {
+  const store = createStore(init)
+  const callback = jest.fn()
+
+  store.subscribe('status', callback)
+  store.set({ status: Status.PENDING })
+  store.set({ messages: [{ read: false, sender: 'John' }] })
+  store.set({ status: Status.OK })
+
+  expect(callback.mock.calls.length).toBe(2)
+  expect(callback.mock.calls[0][0]).toMatchObject({ status: Status.PENDING })
+  expect(callback.mock.calls[1][0]).toMatchObject({ status: Status.OK })
+})
