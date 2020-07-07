@@ -1,47 +1,56 @@
 # TState
 
-This is a very simple data store/state management library, writen in TypeScript. It also comes with a React hook.
+TState is a simple, framework-agnostic state management library written in TypeScript. It also comes with a wrapper function that turns stores into React hooks.
+
+- [Why?](#why-)
+- [Features](#features)
+- [Drawbacks](#drawbacks)
+- [Install](#install)
+- [Getting Started](#getting-started)
+  - [Create stores](#create-stores)
+  - [Use stores](#use-stores)
+  - [Update stores](#update-stores)
+  - [Reset stores](#reset-stores)
+  - [React to store changes](#react-to-store-changes)
 
 ## Why?
 
-When I started learning React (after making some projects with Vue) I was looking for a data store solution. The two big ones in the React ecosystem are *Redux* and *MobX*. But I think both have flaws in my opinion:
+There are mainly two big state management libraries for React: [*Redux*](https://github.com/reduxjs/redux) and [*MobX*](https://github.com/mobxjs/mobx). But they are either very complex or difficult to use with TypeScript. There's also [*Unstaded*](https://github.com/jamiebuilds/unstated) which is quite similar to TState but is slightly different to use.
 
-Redux is bulky (in terms of boilerplate code) and the necessary type parameters for the `useSelector<T, U>()` hook are awkward but necessary. Also, there's another library necessary to write async actions.
+I've created TState with these goals in mind:
 
-The API of MobX just feels like its all over the place. This gives me a hard time getting started with it. There are many ways to do the same thing, including decorators which aren't supported by `create-react-app` - for a good reason.
+- As easy to use as possible
+- Make use of TypeScript's type inference as much as possible
+- Still make it quite feature-rich so it can be used without additional libraries
 
-Then I stumbled over one of those "You probably don't need Redux" articles. It made me think. So I created a module that fetches data from a server, stores it (+ some status information) in variables and connected that modules to a React component via a hook. I made another one for a different resource on the same server. Now I was able to identify the repeating parts and abstracted them away into a new module. TState is the result of that effort. It turned out to be less than 50 LOC which was really surprising.
+## Features
 
-## What are the benefits?
+- Basic store functionality: create, read and update the state
+- Computed values that get updated automatically
+- Reset one store or all stores to their default values
+- Subscribe to all changes within a store or filter changes by value
 
-- It is written with TypeScript in mind. It's super convenient to type your stores.
-- The API surface is tiny, which makes it easy to learn.
-- It "supports" async actions out of the box, by not limiting to sync actions in the first place.
-- No wrapper component needed for React.
-- Also, React support is separated from the core implementation, but included. So, you can use it basically anywhere.
+## Drawbacks
 
-## Are there drawbacks?
+- A store **must** be a plain object. Arrays and other types result in undefined behavior. The object's properties can by of any type though.
 
-- A store root **must** be an object, no arrays and other non-object types are supported. Its properties can be of any type, though.
-- Currently, there's no support for computed values. (May be added later)
-- No time-travel debugging.
-
-## How do I install it?
+## Install
 
 ~~~ bash
 $ npm install @alinnert/tstate
 ~~~
 
-## How do I use it?
+## Getting started
 
-First of all you create your store.
+*This handles the usage of version 2 which hasn't been released yet. It's coming soon.*
 
-**newsStore.ts**
+### Create stores
+
+First, create the types and interfaces for your store:
 
 ~~~ ts
-import { createStore, createReactHook } from '@alinnert/tstate'
+export enum Status { ok, loading, error }
 
-// STEP 1: create interfaces that describe your store
 interface News {
   title: string
   body: string
@@ -49,102 +58,127 @@ interface News {
 
 interface NewsStore {
   items: News[]
-  loading: boolean
-  error: boolean
-}
-
-// STEP 2: create the initial state
-// The state MUST be an object. Simple values like
-// numbers or strings but also arrays are not supported.
-// Wrapping the state object in a function is recommended
-// if you want to reuse the initial state later,
-// like in a 'reset' mutation.
-function getInitialState (): NewsStore {
-  return {
-    items: [],
-    loading: false,
-    error: false
-  }
-}
-
-// STEP 3: create the store
-const newsStore = createStore(getInitialState())
-
-// STEP 4A (React): create the React hook and export it
-export const useNewsStore = createReactHook(newsStore)
-
-// STEP 4B (No React): subscribe to the store
-// You will receive the latest state immediately after subscribing.
-const unsubscribeNewsStore = newsStore.subscribe((newState) => {
-  doSomethingWith(newState)
-})
-
-// Unsubscribe if you're finished with your business.
-// Useful for component frameworks like React.
-// This is what the built-in React hook actually does.
-unsubscribeNewsStore()
-
-// You can also access the current state. This returns the
-// store object. In this case it's of type `NewsStore`.
-newsStore.state
-
-// STEP 5: write some (maybe async) functions to change your store
-// Pro Tip: You can put all calls to `newsStore.set()` in separate
-// ("mutation") functions to avoid repeating the entire state object.
-export async function loadNews (): Promise<void> {
-  newsStore.set({ loading: true, error: false })
-  
-  try {
-    const result = axios.get('/news')
-    newsStore.set({ items: result.data, loading: false, error: false })
-  } catch {
-    newsStore.set({ loading: false, error: true })
-  }
+  status: Status
 }
 ~~~
 
-Now you can use this hook and the functions in your components
+Create the store by defining its default values and (optionally) computed values:
 
-**NewsList.tsx**
+~~~ ts
+import { createStore } from '@alinnert/tstate'
+
+// ...
+
+const store = createStore(
+  (): NewsStore => ({
+    items: [],
+    status: Status.ok
+  }),
+  {
+    computed: {
+      itemsCount: state => state.items.length
+    }
+  }
+)
+~~~
+
+If you're using TState with react create your hook:
+
+~~~ ts
+import { createStore, createReactHook } from '@alinnert/tstate'
+
+// ...
+
+const store = createStore(/* ... */)
+
+export const useNewsStore = createReactHook(store)
+~~~
+
+*Make sure the hook's name starts with `use` so your linter knows it's a React hook*
+
+### Use stores
+
+Now you can use your store in your components:
 
 ~~~ tsx
-import React, { FC } from 'react'
-import { useNewsStore, loadNews } from '../stores/newsStore'
+import { useNewsStore, Status } from './newsStore.ts'
 
-export const NewsList: FC = () => {
-  // Destructure the top-level props from the store.
-  // The fun part is: The types get inferred all the through,
-  // starting at the interface "NewsStore".
-  // The type of `items` is `News[]`
-  // The type of `items[0].title` is `string`.
-  const { items, loading, error } = useNewsStore()
-  
-  useEffect(() => {
-    // Fetch news from the server when the component mounts.
-    // Just call the function directly. No fancy stuff needed.
-    loadNews()
-  }, [])
-  
-  function handleRefreshClick () {
-    // If the user clicks the "Refresh" button, load the news again.
-    loadNews()
-  }
+export function NewsList () {
+  const { items, status, itemsCount } = useNewsStore()
 
   return (
-    <div className="news-list">
-      <button onClick={handleRefreshClick}>Refresh</button>
+    <div>
+      <p>There are {itemsCount} articles.</p>
     
-      {loading ? <div>Loading...</div> : null}
-      {error ? <div>An error occured.</div> : null}
-      {items.length === 0 ? <div>There are no news.</div> : null}
-      
+      {status === Status.loading ? (
+        <div>Articles are being loaded...</div>
+      ) : null}
+
       {items.map(item => (
         <article>
-          <h2>{item.title}</h2>
-          <p>{item.body}</p>
+          <header>
+            <h2>{item.title}</h2>
+            <div>{item.body}</div>
+          </header>
         </article>
       ))}
     </div>
   )
 }
+~~~
+
+### Update stores
+
+To update a store's state you can use the `.set()` method. I recommend to export functions from your store that handles all the updating:
+
+~~~ ts
+const store = createStore(/* ... */)
+
+export async function loadArticles () {
+  store.set({ status: Status.loading })
+
+  try {
+    const result = await fetch(/* ... */)
+    const items = await result.json()
+    store.set({ status: Status.ok, items })
+  } catch (error) {
+    store.set({ status: Status.error })
+  }
+}
+~~~
+
+### Reset stores
+
+To reset a store you can call the `.reset()` function. It will set all values to the ones you defined in the initialization function that you passed to `createStore()`:
+
+~~~ ts
+store.reset()
+~~~
+
+To reset all available stores there's a `resetAll()` function:
+
+~~~ ts
+import { resetAll } from '@alinnert/tstate'
+
+resetAll()
+~~~
+
+### React to store changes
+
+To react to changes in your store you can call `.subscribe(name)` or `.subscribeAll()` on your store.
+
+`.subscribe(name)` reacts to changes of a specific value. You can react to normal and computed values:
+
+~~~ ts
+store.subscribe('items', state => {
+  console.log(`New articles arrived. Now there are ${state.itemsCount} articles.`)
+})
+~~~
+
+`.subscribeAll()` reacts to any change in a store. `createReactHook()` uses this one internally:
+
+~~~ ts
+store.subscribeAll(state => {
+  console.log('Something happend in the store.')
+})
 ~~~

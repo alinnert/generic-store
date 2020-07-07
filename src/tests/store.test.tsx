@@ -31,15 +31,10 @@ test('change values', () => {
   const store = createStore(init)
 
   store.set({ status: Status.PENDING })
-
   expect(store.state).toEqual({ messages: [], status: Status.PENDING })
 
   store.set({ messages: [dummyMessage], status: Status.OK })
-
-  expect(store.state).toEqual({
-    messages: [dummyMessage],
-    status: Status.OK
-  })
+  expect(store.state).toEqual({ messages: [dummyMessage], status: Status.OK })
 })
 
 test('computed values', () => {
@@ -52,7 +47,6 @@ test('computed values', () => {
   expect(store.state.messagesCount).toBe(0)
 
   store.set({ messages: [dummyMessage] })
-
   expect(store.state.messagesCount).toBe(1)
 })
 
