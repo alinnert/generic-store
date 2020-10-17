@@ -98,7 +98,7 @@ const store = createStore(/* ... */)
 export const useNewsStore = createReactHook(store)
 ```
 
-_Make sure the hook's name starts with `use` so your linter knows it's a React hook_
+_Make sure the hook's name starts with `use` so ESLint knows it's a React hook._
 
 ### Use stores
 
@@ -131,6 +131,8 @@ export function NewsList() {
 }
 ```
 
+If you're not using React you can access the data in your store with `store.state`. E.g. `store.state.items`
+
 ### Update stores
 
 To update a store's state you can use the `.set()` method. I recommend to export functions from your store that handles all the updating:
@@ -159,12 +161,12 @@ To reset a store you can call the `.reset()` function. It will set all values to
 store.reset()
 ```
 
-To reset all available stores there's a `resetAll()` function:
+To reset all available stores there's a `resetAllStores()` function:
 
 ```ts
-import { resetAll } from '@alinnert/tstate'
+import { resetAllStores } from '@alinnert/tstate'
 
-resetAll()
+resetAllStores()
 ```
 
 ### React to store changes
