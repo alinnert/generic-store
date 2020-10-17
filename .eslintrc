@@ -3,15 +3,8 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "extends": [
-    "plugin:@typescript-eslint/recommended",
-    "react-app",
-    "standard-with-typescript"
-  ],
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "rules": {
-    "prettier/prettier": "off"
-  }
+  "root": true,
+  "extends": ["plugin:@typescript-eslint/recommended", "react-app", "prettier"],
+  "plugins": ["@typescript-eslint"],
+  "rules": {}
 }

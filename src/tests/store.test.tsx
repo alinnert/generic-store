@@ -5,7 +5,11 @@ interface Message {
   read: boolean
 }
 
-enum Status { OK, PENDING, ERROR }
+enum Status {
+  OK,
+  PENDING,
+  ERROR
+}
 
 interface MessageStore {
   messages: Message[]
